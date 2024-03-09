@@ -4,7 +4,7 @@ import time
 import matplotlib.pyplot as plt
 
 df = pd.read_csv("Startup_Cleaned.csv")
-st.set_page_config(layout='wide', page_title='FS23AI014 Greesha')
+st.set_page_config(layout='wide', page_title='Startup Analysis')
 df['date'] = pd.to_datetime(df['date'], errors='coerce')
 df['month'] = df['date'].dt.month
 df['year'] = df['date'].dt.year
@@ -69,57 +69,34 @@ def load_startup_details(startup_name):
     st.write(f"Subindustry: {startup_details['subvertical']}")
     st.write(f"Location: {startup_details['city']}")
 
-
     # Display funding rounds
     st.subheader("Funding Rounds")
     funding_rounds = df[df['startup'] == startup_name][['date', 'round', 'investors', 'amount']]
     st.dataframe(funding_rounds)
 
-
-
-
-
-
 def overall():
     st.title("Overall Analysis")
-    st.header("MoM graph")
-    selected_option = st.selectbox("Select Type", ["Total", "Count"])
-    if selected_option == "Total":
-        temp_df = df.groupby(["year", "month"])["amount"].sum().reset_index()
-    else:
-        temp_df = df.groupby(["year", "month"])["amount"].count().reset_index()
 
-    temp_df["x_axis"] = temp_df["month"].astype("str") + '-' + temp_df["year"].astype("str")
+    # Modified MoM graph or Add New Graph
+    st.header("Total Funding Over Time")
 
-    fig3, ax3 = plt.subplots()
-    ax3.plot(temp_df["x_axis"], temp_df["amount"])
-    st.pyplot(fig3)
+    total_funding_over_time = df.groupby(['year', 'month'])['amount'].sum().reset_index()
+    st.subheader('Total Funding Over Time')
+    fig_time, ax_time = plt.subplots()
+    ax_time.plot(total_funding_over_time['year'].astype(str) + '-' + total_funding_over_time['month'].astype(str), total_funding_over_time['amount'])
+    st.pyplot(fig_time)
 
-    # Sector Analysis Pie (Top Sectors - Count)
+    # Top Cities
     col1, col2, col3 = st.columns(3)
-
+    top_cities = df.groupby('city').size().nlargest(5)
     with col1:
-        top_sectors_count = df.groupby('vertical').size().nlargest(5)
-        st.subheader('Top Sectors (Count)')
-        fig4, ax4 = plt.subplots()
-        ax4.pie(top_sectors_count, labels=top_sectors_count.index, autopct="%1.1f%%")
-        st.pyplot(fig4)
+        st.subheader('Top Cities')
+        fig_city, ax_city = plt.subplots()
+        ax_city.bar(top_cities.index, top_cities.values)
+        st.pyplot(fig_city)
 
-    # Sector Analysis Pie (Top Sectors - Sum)
-    with col2:
-        top_sectors_sum = df.groupby('vertical')['amount'].sum().nlargest(5)
-        st.subheader('Top Sectors (Sum)')
-        fig5, ax5 = plt.subplots()
-        ax5.pie(top_sectors_sum, labels=top_sectors_sum.index, autopct="%1.1f%%")
-        st.pyplot(fig5)
+    # ... (existing code)
 
-    # Type of Funding
-    with col3:
-        funding_types = df.groupby('round').size()
-        st.subheader('Type of Funding')
-        fig6, ax6 = plt.subplots()
-        ax6.bar(funding_types.index, funding_types.values)
-        st.pyplot(fig6)
 
     # Top Investors
     top_investors = df.groupby('investors')['amount'].sum().nlargest(5)
@@ -127,9 +104,6 @@ def overall():
     fig9, ax9 = plt.subplots()
     ax9.bar(top_investors.index, top_investors.values)
     st.pyplot(fig9)
-
-
-
 
 st.sidebar.title('Startup Funding Analysis')
 option = st.sidebar.selectbox('Select One',['Overall Analysis','Startup','Investor'])
